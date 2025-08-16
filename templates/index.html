@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LinkedIn Profile Search - Ice Breaker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            max-width: 800px;
+            width: 100%;
+            min-height: 600px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #0077b5 0%, #005885 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .search-form {
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #333;
+            font-size: 1rem;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #0077b5;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(0, 119, 181, 0.1);
+        }
+
+        .search-btn {
+            background: linear-gradient(135deg, #0077b5 0%, #005885 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .search-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(0, 119, 181, 0.3);
+        }
+
+        .search-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        /* Loading Animation */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #0077b5;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            font-size: 1.2rem;
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .loading-subtext {
+            font-size: 0.9rem;
+            color: #999;
+        }
+
+        /* Results Section */
+        .results {
+            display: none;
+            margin-top: 30px;
+        }
+
+        .results.show {
+            display: block;
+        }
+
+        .profile-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 30px;
+            border: 1px solid #e1e5e9;
+        }
+
+        .profile-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .profile-photo-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin-right: 25px;
+            flex-shrink: 0;
+        }
+
+        .profile-photo {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid #0077b5;
+            object-fit: cover;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            box-shadow: 0 8px 25px rgba(0, 119, 181, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .profile-photo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(0, 119, 181, 0.25);
+        }
+
+        .profile-photo-placeholder {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            border: 4px solid #0077b5;
+            background: linear-gradient(135deg, #0077b5 0%, #005885 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 600;
+            box-shadow: 0 8px 25px rgba(0, 119, 181, 0.15);
+            transition: all 0.3s ease;
+        }
+
+        .profile-photo-placeholder:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 35px rgba(0, 119, 181, 0.25);
+        }
+
+        .profile-status-indicator {
+            position: absolute;
+            bottom: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            background: #28a745;
+            border: 3px solid white;
+            border-radius: 50%;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(40, 167, 69, 0.7);
+            }
+            70% {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 10px rgba(40, 167, 69, 0);
+            }
+            100% {
+                box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15), 0 0 0 0 rgba(40, 167, 69, 0);
+            }
+        }
+
+        .profile-photo-loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-photo-loading::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% {
+                left: -100%;
+            }
+            100% {
+                left: 100%;
+            }
+        }
+
+        .profile-info h3 {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .profile-info p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .summary-section {
+            margin-bottom: 25px;
+        }
+
+        .summary-section h4 {
+            color: #0077b5;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+            padding-bottom: 10px;
+        }
+
+        .summary-text {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: #444;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            border-left: 4px solid #0077b5;
+        }
+
+        .facts-section h4 {
+            color: #0077b5;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e1e5e9;
+            padding-bottom: 10px;
+        }
+
+        .fact-item {
+            background: white;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid #28a745;
+            font-size: 1rem;
+            line-height: 1.5;
+            color: #444;
+        }
+
+        /* Error Section */
+        .error {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .error.show {
+            display: block;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            color: #dc3545;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 1.5rem;
+            color: #dc3545;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .error-message {
+            font-size: 1rem;
+            color: #666;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        .retry-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .retry-btn:hover {
+            background: #c82333;
+            transform: translateY(-1px);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .container {
+                margin: 10px;
+                border-radius: 15px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 25px;
+            }
+
+            .profile-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .profile-photo-container {
+                margin-right: 0;
+                margin-bottom: 20px;
+                align-self: center;
+            }
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 LinkedIn Profile Search</h1>
+            <p>Discover professional insights and ice breakers for networking</p>
+        </div>
+
+        <div class="content">
+            <!-- Search Form -->
+            <div class="search-form" id="searchForm">
+                <div class="form-group">
+                    <label for="name">Full Name *</label>
+                    <input type="text" id="name" name="name" placeholder="e.g., John Doe" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="technology">Technology/Skills *</label>
+                    <input type="text" id="technology" name="technology" placeholder="e.g., Python, React, Machine Learning" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="company">Company *</label>
+                    <input type="text" id="company" name="company" placeholder="e.g., Google, Microsoft, Startup Inc." required>
+                </div>
+
+                <button type="submit" class="search-btn" id="searchBtn">
+                    🚀 Search LinkedIn Profile
+                </button>
+            </div>
+
+            <!-- Loading Animation -->
+            <div class="loading" id="loadingSection">
+                <div class="spinner"></div>
+                <div class="loading-text">Searching LinkedIn Profile...</div>
+                <div class="loading-subtext">This may take a few moments while we gather professional insights</div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results" id="resultsSection">
+                <div class="profile-card">
+                    <div class="profile-header">
+                        <div class="profile-photo-container" id="profilePhotoContainer">
+                            <img src="" alt="Profile Photo" class="profile-photo" id="profilePhoto" style="display: none;">
+                            <div class="profile-photo-placeholder" id="profilePlaceholder">
+                                👤
+                            </div>
+                            <div class="profile-status-indicator" title="Profile Found"></div>
+                        </div>
+                        <div class="profile-info">
+                            <h3 id="profileName">Professional Profile</h3>
+                            <p id="profileTitle">LinkedIn Profile Analysis</p>
+                        </div>
+                    </div>
+
+                    <div class="summary-section">
+                        <h4>📋 Professional Summary</h4>
+                        <div class="summary-text" id="summaryText">
+                            <!-- Summary content will be populated here -->
+                        </div>
+                    </div>
+
+                    <div class="facts-section">
+                        <h4>💡 Interesting Facts</h4>
+                        <div id="factsContainer">
+                            <!-- Facts will be populated here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Section -->
+            <div class="error" id="errorSection">
+                <div class="error-icon">⚠️</div>
+                <div class="error-title">Oops! Something went wrong</div>
+                <div class="error-message" id="errorMessage">
+                    We couldn't find the LinkedIn profile or there was an error processing your request.
+                    Please check the information and try again.
+                </div>
+                <button class="retry-btn" id="retryBtn">Try Again</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LinkedInProfileSearch {
+            constructor() {
+                this.initializeElements();
+                this.bindEvents();
+            }
+
+            initializeElements() {
+                this.searchForm = document.getElementById('searchForm');
+                this.searchBtn = document.getElementById('searchBtn');
+                this.loadingSection = document.getElementById('loadingSection');
+                this.resultsSection = document.getElementById('resultsSection');
+                this.errorSection = document.getElementById('errorSection');
+                this.retryBtn = document.getElementById('retryBtn');
+
+                // Form inputs
+                this.nameInput = document.getElementById('name');
+                this.technologyInput = document.getElementById('technology');
+                this.companyInput = document.getElementById('company');
+
+                // Result elements
+                this.profilePhotoContainer = document.getElementById('profilePhotoContainer');
+                this.profilePhoto = document.getElementById('profilePhoto');
+                this.profilePlaceholder = document.getElementById('profilePlaceholder');
+                this.profileName = document.getElementById('profileName');
+                this.profileTitle = document.getElementById('profileTitle');
+                this.summaryText = document.getElementById('summaryText');
+                this.factsContainer = document.getElementById('factsContainer');
+                this.errorMessage = document.getElementById('errorMessage');
+            }
+
+            bindEvents() {
+                this.searchBtn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    this.handleSearch();
+                });
+
+                this.retryBtn.addEventListener('click', () => {
+                    this.resetToSearchForm();
+                });
+
+                // Allow Enter key to submit form
+                [this.nameInput, this.technologyInput, this.companyInput].forEach(input => {
+                    input.addEventListener('keypress', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            this.handleSearch();
+                        }
+                    });
+                });
+            }
+
+            validateForm() {
+                const name = this.nameInput.value.trim();
+                const technology = this.technologyInput.value.trim();
+                const company = this.companyInput.value.trim();
+
+                if (!name || !technology || !company) {
+                    this.showError('Please fill in all required fields.');
+                    return false;
+                }
+
+                if (name.length < 2) {
+                    this.showError('Please enter a valid name (at least 2 characters).');
+                    return false;
+                }
+
+                return true;
+            }
+
+            async handleSearch() {
+                if (!this.validateForm()) {
+                    return;
+                }
+
+                this.showLoading();
+
+                const searchData = {
+                    name: this.nameInput.value.trim(),
+                    technology: this.technologyInput.value.trim(),
+                    company: this.companyInput.value.trim()
+                };
+
+                try {
+                    const response = await fetch('/ice_breaker', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(searchData)
+                    });
+
+                    const data = await response.json();
+
+                    if (response.ok) {
+                        console.log('Received data from backend:', data);
+                        this.displayResults(data, searchData);
+                    } else {
+                        this.showError(data.error || 'An error occurred while searching for the profile.');
+                    }
+                } catch (error) {
+                    console.error('Search error:', error);
+                    this.showError('Network error. Please check your connection and try again.');
+                }
+            }
+
+            showLoading() {
+                this.hideAllSections();
+                this.loadingSection.classList.add('show');
+                this.searchBtn.disabled = true;
+            }
+
+            displayResults(data, searchData) {
+                this.hideAllSections();
+
+                // Set profile name and title
+                this.profileName.textContent = searchData.name;
+                this.profileTitle.textContent = `${searchData.technology} at ${searchData.company}`;
+
+                // Set profile photo with enhanced handling
+                this.setupProfilePhoto(data.photo_url, searchData.name);
+
+                // Set summary
+                if (data.summary && data.summary.summary) {
+                    this.summaryText.textContent = data.summary.summary;
+                } else {
+                    this.summaryText.textContent = 'No summary available for this profile.';
+                }
+
+                // Set facts
+                this.factsContainer.innerHTML = '';
+                if (data.summary && data.summary.facts && data.summary.facts.length > 0) {
+                    data.summary.facts.forEach((fact, index) => {
+                        const factElement = document.createElement('div');
+                        factElement.className = 'fact-item';
+                        factElement.textContent = fact;
+                        this.factsContainer.appendChild(factElement);
+                    });
+                } else {
+                    const noFactsElement = document.createElement('div');
+                    noFactsElement.className = 'fact-item';
+                    noFactsElement.textContent = 'No interesting facts available for this profile.';
+                    this.factsContainer.appendChild(noFactsElement);
+                }
+
+                this.resultsSection.classList.add('show');
+                this.searchBtn.disabled = false;
+            }
+
+            showError(message) {
+                this.hideAllSections();
+                this.errorMessage.textContent = message;
+                this.errorSection.classList.add('show');
+                this.searchBtn.disabled = false;
+            }
+
+            hideAllSections() {
+                this.loadingSection.classList.remove('show');
+                this.resultsSection.classList.remove('show');
+                this.errorSection.classList.remove('show');
+            }
+
+            setupProfilePhoto(photoUrl, name) {
+                // Debug logging
+                console.log('Setting up profile photo:', { photoUrl, name });
+
+                // Reset photo states
+                this.profilePhoto.style.display = 'none';
+                this.profilePlaceholder.style.display = 'flex';
+
+                // Set placeholder initials
+                const initials = this.getInitials(name);
+                this.profilePlaceholder.textContent = initials;
+
+                if (photoUrl && photoUrl.trim() !== '') {
+                    // Create a new image to test if URL is valid
+                    const testImage = new Image();
+
+                    testImage.onload = () => {
+                        // Image loaded successfully
+                        console.log('Profile photo loaded successfully:', photoUrl);
+                        this.profilePhoto.src = photoUrl;
+                        this.profilePhoto.style.display = 'block';
+                        this.profilePlaceholder.style.display = 'none';
+                    };
+
+                    testImage.onerror = () => {
+                        // Image failed to load, keep placeholder
+                        console.log('Profile photo failed to load, using placeholder. URL was:', photoUrl);
+                        this.profilePhoto.style.display = 'none';
+                        this.profilePlaceholder.style.display = 'flex';
+                    };
+
+                    // Set a timeout for slow loading images
+                    setTimeout(() => {
+                        if (this.profilePhoto.style.display === 'none') {
+                            console.log('Profile photo loading timeout, using placeholder');
+                        }
+                    }, 5000);
+
+                    testImage.src = photoUrl;
+                } else {
+                    // No photo URL provided, use placeholder
+                    this.profilePhoto.style.display = 'none';
+                    this.profilePlaceholder.style.display = 'flex';
+                }
+            }
+
+            getInitials(name) {
+                if (!name || typeof name !== 'string') {
+                    return '👤';
+                }
+
+                const words = name.trim().split(' ').filter(word => word.length > 0);
+
+                if (words.length === 0) {
+                    return '👤';
+                } else if (words.length === 1) {
+                    return words[0].charAt(0).toUpperCase();
+                } else {
+                    return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+                }
+            }
+
+            resetToSearchForm() {
+                this.hideAllSections();
+                // Reset profile photo
+                this.profilePhoto.style.display = 'none';
+                this.profilePlaceholder.style.display = 'flex';
+                this.profilePlaceholder.textContent = '👤';
+                // Optionally clear form fields
+                // this.nameInput.value = '';
+                // this.technologyInput.value = '';
+                // this.companyInput.value = '';
+            }
+        }
+
+        // Initialize the application when DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            new LinkedInProfileSearch();
+        });
+    </script>
+</body>
+</html>

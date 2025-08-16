@@ -7,6 +7,13 @@ name = "pypi"
 python-dotenv = "*"
 langchain = "*"
 langchain-openai = "*"
+flask = "==3.0.3"
+#langchain = "0.1.14"
+#langchain-core = "0.1.33"
+#langchain-community = "0.0.30"
+#langchain-ollama = "0.0.6"
+#langchain-openai = "0.0.8"
+#ollama = "0.1.6"
 
 [dev-packages]
 
